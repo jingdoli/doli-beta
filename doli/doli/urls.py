@@ -5,8 +5,16 @@ from django.conf.urls.static import static
 from django.views.generic.simple import direct_to_template
 
 from django.contrib import admin
+from doli.api import EntryResource, UserResource, ApiTokenResource
+
+from tastypie.api import Api
+
 admin.autodiscover()
 
+v1_api = Api(api_name='v1')
+v1_api.register(UserResource())
+v1_api.register(EntryResource())
+v1_api.register(ApiTokenResource())
 
 urlpatterns = patterns("",
     url(r"^$", direct_to_template, {"template": "homepage.html"}, name="home"),
@@ -15,6 +23,9 @@ urlpatterns = patterns("",
     url(r"^account/", include("account.urls")),
     url(r"^calendar/", include("swingtime.urls")),
     url(r'^notes/', include('notes.urls')),
+    url(r'', include('social_auth.urls')),
+    url(r"^accounts/profile/$", direct_to_template, {"template": "homepage.html"}),
+    url(r'^api/', include(v1_api.urls)),
 )
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
