@@ -25,6 +25,7 @@ class SillyAuthentication(BasicAuthentication):
     def get_identifier(self, request):
         return request.user.username
 
+
 class UserResource(ModelResource):
     class Meta:
         queryset = User.objects.all()
@@ -34,6 +35,7 @@ class UserResource(ModelResource):
         filtering = {
             'username': ALL,
         }
+        allowed_methods = ['get']
 
 
 class EntryResource(ModelResource):
