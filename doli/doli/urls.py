@@ -5,16 +5,19 @@ from django.conf.urls.static import static
 from django.views.generic.simple import direct_to_template
 
 from django.contrib import admin
-from doli.api import EntryResource, UserResource, ApiTokenResource
+from doli.api import NoteResource, ApiTokenResource, EventResource, UserResource, EntryResource, UserSignUpResource
 
 from tastypie.api import Api
 
 admin.autodiscover()
 
 v1_api = Api(api_name='v1')
-v1_api.register(UserResource())
-v1_api.register(EntryResource())
+v1_api.register(NoteResource())
 v1_api.register(ApiTokenResource())
+v1_api.register(EventResource())
+v1_api.register(EntryResource())
+v1_api.register(UserResource())
+v1_api.register(UserSignUpResource())
 
 urlpatterns = patterns("",
     url(r"^$", direct_to_template, {"template": "homepage.html"}, name="home"),
