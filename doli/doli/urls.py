@@ -5,7 +5,7 @@ from django.conf.urls.static import static
 from django.views.generic.simple import direct_to_template
 
 from django.contrib import admin
-from doli.api import NoteResource, ApiTokenResource, EventResource, UserResource, EntryResource, UserSignUpResource
+from doli.api import NoteResource, ApiTokenResource, EventResource, UserResource, EntryResource, UserSignUpResource, EventOccurrenceResource
 
 from tastypie.api import Api
 
@@ -18,6 +18,7 @@ v1_api.register(EventResource())
 v1_api.register(EntryResource())
 v1_api.register(UserResource())
 v1_api.register(UserSignUpResource())
+v1_api.register(EventOccurrenceResource())
 
 urlpatterns = patterns("",
     url(r"^$", direct_to_template, {"template": "homepage.html"}, name="home"),

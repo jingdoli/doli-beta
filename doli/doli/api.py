@@ -3,15 +3,14 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError
 from tastypie import fields
-from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
+from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS, NBResource
 from tastypie.authentication import BasicAuthentication, ApiKeyAuthentication, Authentication
 from tastypie.authorization import Authorization
 from tastypie.models import ApiKey
 from tastypie.exceptions import NotFound
-from swingtime.models import Event, Occurrence
+from swingtime.models import Event, Occurrence, OccurrenceManager
 from notes.models import Notes
 from doli.models import Entry
-
 
 class SillyAuthentication(BasicAuthentication):
     def is_authenticated(self, request, **kwargs):
@@ -133,3 +132,12 @@ class ApiTokenResource(ModelResource):
         return api_key
 
 '''
+
+class EventOccurrenceResource(NBResource):
+    events = fields.ToOneField(EventResource, 'event', full=True)
+    class Meta:
+        queryset = Occurrence.objects.all()
+        manager_filters = ('daily_occurrences')
+        resource_name = 'today_events'
+        allowed_methods = ['get']
+        authentication = ApiKeyAuthentication()
