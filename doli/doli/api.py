@@ -1,13 +1,14 @@
-from django import http
+import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError
+from tastypie import http
 from tastypie import fields
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS, NBResource
 from tastypie.authentication import BasicAuthentication, ApiKeyAuthentication, Authentication
 from tastypie.authorization import Authorization
 from tastypie.models import ApiKey
-from tastypie.exceptions import NotFound
+from tastypie.exceptions import NotFound, ImmediateHttpResponse
 from swingtime.models import Event, Occurrence, OccurrenceManager
 from notes.models import Notes
 from doli.models import Entry
@@ -67,8 +68,9 @@ class UserSignUpResource(ModelResource):
             bundle = super(UserSignUpResource, self).obj_create(bundle, **kwargs)
             bundle.obj.set_password(bundle.data.get('password'))
             bundle.obj.save()
-        except IntegrityError:
-            return http.HttpResponseBadRequest('The username already exists dont sign up')
+        except IntegrityError, e:
+            raise ImmediateHttpResponse(response=http.HttpBadRequest(e.message))
+
     def dehydrate_title(self, bundle):
         return "User" + bundle.data.get('username') + 'has signed up.'
 
@@ -93,7 +95,6 @@ class NoteResource(ModelResource):
 ''' This class manages the calendar event resource
 Note: the events is managed by swingtime Event and Occurrence to get all the information
 of the Event.
-Jing: still need work on getting time information from occurence and add to the return.
 '''
 class EventResource(ModelResource):
     class Meta:
@@ -141,3 +142,25 @@ class EventOccurrenceResource(NBResource):
         resource_name = 'today_events'
         allowed_methods = ['get']
         authentication = ApiKeyAuthentication()
+
+    def get_object_list(self, request):
+        dtyear = None
+        dtmonth = None
+        dtday = None
+
+        if 'dtyear' in request.GET:
+            dtyear = request.GET['dtyear']
+        if 'dtmonth' in request.GET:
+            dtmonth = request.GET['dtmonth']
+        if 'dtday' in request.GET:
+            dtday = request.GET['dtday']
+        if dtyear and dtmonth and dtday:
+            try:
+                print '%s %s %s user: %s'%(dtyear,dtmonth, dtday, request.user)
+                dt = datetime.datetime(int(dtyear), int(dtmonth), int(dtday))
+            except ValueError, e:
+                return e
+        else:
+            dt = None
+
+        return super(EventOccurrenceResource, self).get_object_list(request).filter(user=request.user, start_time=dt)
