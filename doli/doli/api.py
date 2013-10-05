@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, DatabaseError
 from django.db import transaction
+from django.db import connection
+
 try:
     from django.conf.urls import patterns, url
 except ImportError: # Django < 1.4
@@ -133,11 +135,14 @@ class UserSignUpResource(ModelResource):
             bundle.obj.set_password(bundle.data.get('password'))
             bundle.obj.save()
         except (DatabaseError, IntegrityError), e:
+            connection.close()
             self.rollback([bundle])
             raise ImmediateHttpResponse(http.HttpBadRequest("User name or email has already been taken!"))
 	except ValueError, e:
+            self.rollback([bundle])
             raise ImmediateHttpResponse(http.HttpBadRequest("Invalid input string."))
         except Exception, e:
+            self.rollback([bundle])
             raise ImmediateHttpResponse(response=http.HttpBadRequest(e.message))
 
     def dehydrate_title(self, bundle):
