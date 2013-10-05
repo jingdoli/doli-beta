@@ -1,7 +1,8 @@
 import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-from django.db import IntegrityError
+from django.db import IntegrityError, DatabaseError
+from django.db import transaction
 try:
     from django.conf.urls import patterns, url
 except ImportError: # Django < 1.4
@@ -124,13 +125,19 @@ class UserSignUpResource(ModelResource):
         excludes = ['is_active','is_staff','is_superuser']
         authentication = ApiKeyAuthentication()
         authorization = Authorization()
+	#TODO: Add input validation!!
 
     def obj_create(self, bundle, **kwargs):
         try:
             bundle = super(UserSignUpResource, self).obj_create(bundle, **kwargs)
             bundle.obj.set_password(bundle.data.get('password'))
             bundle.obj.save()
-        except IntegrityError, e:
+        except (DatabaseError, IntegrityError), e:
+            self.rollback([bundle])
+            raise ImmediateHttpResponse(http.HttpBadRequest("User name or email has already been taken!"))
+	except ValueError, e:
+            raise ImmediateHttpResponse(http.HttpBadRequest("Invalid input string."))
+        except Exception, e:
             raise ImmediateHttpResponse(response=http.HttpBadRequest(e.message))
 
     def dehydrate_title(self, bundle):
